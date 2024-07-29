@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { useInteractStore } from "@utils/Store";
 import { Perf } from "r3f-perf";
 import { Leva } from "leva";
-import Sketch from "./components/Sketch/Sketch";
+import Sketch from "./Sketch/Sketch";
 export default function ThreeContainer() {
     const demand = useInteractStore((state) => state.demand);
     return (
@@ -16,7 +16,7 @@ export default function ThreeContainer() {
                 camera={{
                     fov: 50,
                     near: 0.1,
-                    position: [0, 0, 5],
+                    position: [6, 4, 5],
                     far: 500,
                 }}
             >
