@@ -4,6 +4,7 @@ import { useInteractStore } from "@utils/Store";
 import { Perf } from "r3f-perf";
 import { Leva } from "leva";
 import Sketch from "./Sketch/Sketch";
+import { NoToneMapping } from "three";
 export default function ThreeContainer() {
     const demand = useInteractStore((state) => state.demand);
     return (
@@ -17,8 +18,9 @@ export default function ThreeContainer() {
                     fov: 50,
                     near: 0.1,
                     position: [6, 4, 5],
-                    far: 500,
+                    far: 100,
                 }}
+                gl={{toneMapping:NoToneMapping}}
             >
                 {location.hash.includes("debug") && (
                     <Perf position="top-left" />
