@@ -17,7 +17,7 @@ float LinearEyeDepth(const in float depth) {
 
   return 1.0 / (_ZBufferParamsZ * depth + _ZBufferParamsW);
 }
-
+// https://x.com/gonnavis/status/1377183786949959682 Formula Derivation
 float readDepth(sampler2D depthSampler, vec2 coord) {
   float fragCoordZ = texture2D(depthSampler, coord).x;
   float viewZ = perspectiveDepthToViewZ(fragCoordZ, uNear, uFar);
