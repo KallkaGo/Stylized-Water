@@ -16,6 +16,7 @@ import {
   HalfFloatType,
   Mesh,
   MeshBasicMaterial,
+  MeshStandardMaterial,
   MeshToonMaterial,
   NormalBlending,
   NoToneMapping,
@@ -30,7 +31,13 @@ import fragmentShader from "../shader/fragment.glsl";
 import { useDepthTexturePers } from "@utils/useDepthTexturePers";
 import { useNormalBuffer } from "@utils/useNormalBuffer";
 import { useControls } from "leva";
-import { EffectComposer, SMAA, ToneMapping } from "@react-three/postprocessing";
+import {
+  BrightnessContrast,
+  EffectComposer,
+  SMAA,
+  ToneMapping,
+} from "@react-three/postprocessing";
+import { BlendFunction } from "postprocessing";
 
 const Sketch = () => {
   const noiseTex = useTexture("/textures/PerlinNoise.png");
@@ -99,7 +106,7 @@ const Sketch = () => {
 
   return (
     <>
-      <OrbitControls domElement={controlDom} />
+      <OrbitControls domElement={controlDom} minDistance={2} maxDistance={5} />
       <color attach={"background"} args={["ivory"]} />
       <ambientLight intensity={5} />
       <group scale={0.01 * 0.5}>
@@ -113,7 +120,7 @@ const Sketch = () => {
         frameBufferType={HalfFloatType}
         multisampling={0}
       >
-        <SMAA />
+        <SMAA blendFunction={BlendFunction.SOFT_LIGHT}   />
       </EffectComposer>
     </>
   );
