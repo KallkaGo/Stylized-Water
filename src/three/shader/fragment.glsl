@@ -1,5 +1,7 @@
 #include <packing>
 
+#define SMOOTHSTEP_AA 0.01
+
 varying vec4 vScreenPos;
 varying vec2 vUv;
 varying vec3 vViewNormal;
@@ -12,6 +14,7 @@ uniform float uFar;
 uniform float uTime;
 uniform float uFoamMaximumDistance;
 uniform float uFoamMinimumDistance;
+uniform vec3 uFoamColor;
 
 float LinearEyeDepth(const in float depth) {
   float _ZBufferParamsX = 1. - uFar / uNear;
@@ -30,6 +33,13 @@ float readDepth(sampler2D depthSampler, vec2 coord) {
 
 float getViewZ(float depth) {
   return perspectiveDepthToViewZ(depth, uNear, uFar);
+}
+
+vec4 alphaBlend(vec4 top, vec4 bottom) {
+  vec3 color = (top.rgb * top.a) + (bottom.rgb * (1. - top.a));
+  float alpha = top.a + bottom.a * (1. - top.a);
+
+  return vec4(color, alpha);
 }
 
 void main() {
@@ -74,11 +84,19 @@ void main() {
 
   float surfaceNoiseSample = texture2D(uNoiseTex, newUV).r;
 
-  surfaceNoiseSample = step(surfaceNoiseCutoff, surfaceNoiseSample);
+  /*  anti-aliasing */
+  // surfaceNoiseSample = step(surfaceNoiseCutoff, surfaceNoiseSample);
+  surfaceNoiseSample = smoothstep(surfaceNoiseCutoff - SMOOTHSTEP_AA, surfaceNoiseCutoff + SMOOTHSTEP_AA, surfaceNoiseSample);
+
+  vec4 surfaceNoiseColor = vec4(uFoamColor, 1.);
+
+  surfaceNoiseColor.a *= surfaceNoiseSample;
 
   vec4 waterColor = mix(shalllowColor, deepColor, diffDepth / 1.);
 
-  csm_FragColor = waterColor + surfaceNoiseSample;
+  // csm_FragColor = surfaceNoiseColor + waterColor;
+
+  csm_FragColor = alphaBlend(surfaceNoiseColor, waterColor);
 
   // csm_FragColor.rgb = vec3(existingNormal);
 

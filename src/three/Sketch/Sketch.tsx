@@ -12,9 +12,11 @@ import Pond from "../components/Pond";
 import Lifesaver from "../components/Lifesaver";
 import { useFrame, useThree } from "@react-three/fiber";
 import {
+  Color,
   Mesh,
   MeshBasicMaterial,
   MeshToonMaterial,
+  NormalBlending,
   RepeatWrapping,
   Texture,
   Uniform,
@@ -24,6 +26,7 @@ import vertexShader from "../shader/vertex.glsl";
 import fragmentShader from "../shader/fragment.glsl";
 import { useDepthTexturePers } from "@utils/useDepthTexturePers";
 import { useNormalBuffer } from "@utils/useNormalBuffer";
+import { useControls } from "leva";
 
 const Sketch = () => {
   const noiseTex = useTexture("/textures/PerlinNoise.png");
@@ -45,9 +48,17 @@ const Sketch = () => {
       uTime: new Uniform(0),
       uFoamMaximumDistance: new Uniform(0.3),
       uFoamMinimumDistance: new Uniform(0.03),
+      uFoamColor:new Uniform(new Color('white')),
     }),
     []
   );
+
+  useControls("Water", {
+    FoamColor: { 
+      value: "white",
+      onChange: (v) => uniforms.uFoamColor.value.set(v)
+    },
+  });
 
   useEffect(() => {
     const waterMesh = scene.getObjectByName("Water") as Mesh;
@@ -60,6 +71,8 @@ const Sketch = () => {
         fragmentShader: fragmentShader,
         transparent: true,
         silent: true,
+        depthWrite:false,
+        blending:NormalBlending
       });
 
       waterMesh.material = newMat;
