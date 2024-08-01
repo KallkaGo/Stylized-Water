@@ -55,6 +55,7 @@ void main() {
   float diffDepth = linearEyeDepth - fragamentLinearDepth;
 
   diffDepth = clamp(diffDepth, 0.0, 1.0);
+  diffDepth *= step(0.01, diffDepth);
 
   vec4 shalllowColor = vec4(0.325, 0.807, 0.971, 0.725);
 
@@ -78,7 +79,7 @@ void main() {
 
   float foamDistance = mix(uFoamMaximumDistance, uFoamMinimumDistance, normalDot);
 
-  float foamDepthDifference01 = clamp(diffDepth / foamDistance, 0., 1.);
+  float foamDepthDifference01 = clamp(diffDepth / foamDistance, 0.0, 1.);
 
   float surfaceNoiseCutoff = foamDepthDifference01 * .777;
 
@@ -96,8 +97,8 @@ void main() {
 
   // csm_FragColor = surfaceNoiseColor + waterColor;
 
-  csm_FragColor = alphaBlend(surfaceNoiseColor, waterColor);
+  csm_DiffuseColor = alphaBlend(surfaceNoiseColor, waterColor);
 
-  // csm_FragColor.rgb = vec3(existingNormal);
+  // csm_FragColor.rgb = vec3(diffDepth);
 
 }

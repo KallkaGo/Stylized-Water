@@ -13,13 +13,16 @@ import Lifesaver from "../components/Lifesaver";
 import { useFrame, useThree } from "@react-three/fiber";
 import {
   Color,
+  HalfFloatType,
   Mesh,
   MeshBasicMaterial,
   MeshToonMaterial,
   NormalBlending,
+  NoToneMapping,
   RepeatWrapping,
   Texture,
   Uniform,
+  UnsignedByteType,
 } from "three";
 import CustomMaterial from "three-custom-shader-material/vanilla";
 import vertexShader from "../shader/vertex.glsl";
@@ -27,6 +30,7 @@ import fragmentShader from "../shader/fragment.glsl";
 import { useDepthTexturePers } from "@utils/useDepthTexturePers";
 import { useNormalBuffer } from "@utils/useNormalBuffer";
 import { useControls } from "leva";
+import { EffectComposer, SMAA, ToneMapping } from "@react-three/postprocessing";
 
 const Sketch = () => {
   const noiseTex = useTexture("/textures/PerlinNoise.png");
@@ -48,15 +52,15 @@ const Sketch = () => {
       uTime: new Uniform(0),
       uFoamMaximumDistance: new Uniform(0.3),
       uFoamMinimumDistance: new Uniform(0.03),
-      uFoamColor:new Uniform(new Color('white')),
+      uFoamColor: new Uniform(new Color("white")),
     }),
     []
   );
 
   useControls("Water", {
-    FoamColor: { 
+    FoamColor: {
       value: "white",
-      onChange: (v) => uniforms.uFoamColor.value.set(v)
+      onChange: (v) => uniforms.uFoamColor.value.set(v),
     },
   });
 
@@ -71,8 +75,8 @@ const Sketch = () => {
         fragmentShader: fragmentShader,
         transparent: true,
         silent: true,
-        depthWrite:false,
-        blending:NormalBlending
+        depthWrite: false,
+        blending: NormalBlending,
       });
 
       waterMesh.material = newMat;
@@ -104,6 +108,13 @@ const Sketch = () => {
         <Pond />
         <Lifesaver />
       </group>
+      <EffectComposer
+        disableNormalPass
+        frameBufferType={HalfFloatType}
+        multisampling={0}
+      >
+        <SMAA />
+      </EffectComposer>
     </>
   );
 };

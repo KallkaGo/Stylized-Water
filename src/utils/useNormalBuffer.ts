@@ -5,7 +5,10 @@ import { MeshNormalMaterial } from "three"
 
 const useNormalBuffer = () => {
 
-  const renderTarget = useFBO(innerWidth, innerHeight)
+  const renderTarget = useFBO(innerWidth, innerHeight,{
+    generateMipmaps: false,
+    samples: 16
+  })
 
   const material = useMemo(() => new MeshNormalMaterial(), [])
 
