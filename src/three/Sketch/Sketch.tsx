@@ -109,7 +109,7 @@ const Sketch = () => {
       <OrbitControls domElement={controlDom} minDistance={2} maxDistance={5} />
       <color attach={"background"} args={["ivory"]} />
       <ambientLight intensity={5} />
-      <group scale={0.01 * 0.5}>
+      <group scale={0.01 * 0.7}>
         <Rock />
         <Log />
         <Pond />
