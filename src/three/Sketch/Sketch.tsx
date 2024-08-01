@@ -23,13 +23,13 @@ import CustomMaterial from "three-custom-shader-material/vanilla";
 import vertexShader from "../shader/vertex.glsl";
 import fragmentShader from "../shader/fragment.glsl";
 import { useDepthTexturePers } from "@utils/useDepthTexturePers";
+import { useNormalBuffer } from "@utils/useNormalBuffer";
 
 const Sketch = () => {
   const noiseTex = useTexture("/textures/PerlinNoise.png");
   noiseTex.wrapS = noiseTex.wrapT = RepeatWrapping;
 
-  const distortionTex = useTexture('/textures/WaterDistortion.png')
-  
+  const distortionTex = useTexture("/textures/WaterDistortion.png");
 
   const scene = useThree((state) => state.scene);
   const controlDom = useInteractStore((state) => state.controlDom);
@@ -39,9 +39,12 @@ const Sketch = () => {
       uDepthTex: new Uniform(undefined) as Uniform<Texture | undefined>,
       uNoiseTex: new Uniform(noiseTex),
       uDisortTex: new Uniform(distortionTex),
+      uNormalTex: new Uniform(undefined) as Uniform<Texture | undefined>,
       uNear: new Uniform(0),
       uFar: new Uniform(0),
       uTime: new Uniform(0),
+      uFoamMaximumDistance: new Uniform(0.3),
+      uFoamMinimumDistance: new Uniform(0.03),
     }),
     []
   );
@@ -66,12 +69,15 @@ const Sketch = () => {
 
   const { depthTexture } = useDepthTexturePers(innerWidth, innerHeight);
 
+  const { normalTexture } = useNormalBuffer();
+
   useFrame((state, delta) => {
     delta %= 1;
     uniforms.uNear.value = state.camera.near;
     uniforms.uFar.value = state.camera.far;
     uniforms.uTime.value += delta;
     uniforms.uDepthTex.value = depthTexture;
+    uniforms.uNormalTex.value = normalTexture;
   });
 
   return (

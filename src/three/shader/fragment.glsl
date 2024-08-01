@@ -2,12 +2,16 @@
 
 varying vec4 vScreenPos;
 varying vec2 vUv;
+varying vec3 vViewNormal;
 uniform sampler2D uDepthTex;
 uniform sampler2D uNoiseTex;
 uniform sampler2D uDisortTex;
+uniform sampler2D uNormalTex;
 uniform float uNear;
 uniform float uFar;
 uniform float uTime;
+uniform float uFoamMaximumDistance;
+uniform float uFoamMinimumDistance;
 
 float LinearEyeDepth(const in float depth) {
   float _ZBufferParamsX = 1. - uFar / uNear;
@@ -33,14 +37,17 @@ void main() {
 
   float depth = readDepth(uDepthTex, scrPos);
 
+  /* camera lookat -viewZ */
   float linearEyeDepth = -getViewZ(depth);
 
   float fragamentLinearDepth = -getViewZ(gl_FragCoord.z);
 
   float diffDepth = linearEyeDepth - fragamentLinearDepth;
+
   diffDepth = clamp(diffDepth, 0.0, 1.0);
 
   vec4 shalllowColor = vec4(0.325, 0.807, 0.971, 0.725);
+
   vec4 deepColor = vec4(0.086, 0.407, 1, 0.749);
 
   vec2 distortSample = texture2D(uDisortTex, vUv).rg;
@@ -55,14 +62,24 @@ void main() {
 
   newUV = vec2(newUV.x + uTime * 0.03 + distortSample.x, newUV.y + uTime * 0.03 + distortSample.y);
 
-  float surfaceNoiseSample = texture2D(uNoiseTex, newUV).r;
+  vec3 normalBuffer = texture2D(uNormalTex, scrPos).rgb;
 
-  float foamDepthDifference01 = clamp(diffDepth / .04, 0., 1.);
+  float normalDot = clamp(dot(normalBuffer, normalize(vViewNormal)), 0.0, 1.0);
+
+  float foamDistance = mix(uFoamMaximumDistance, uFoamMinimumDistance, normalDot);
+
+  float foamDepthDifference01 = clamp(diffDepth / foamDistance, 0., 1.);
+
   float surfaceNoiseCutoff = foamDepthDifference01 * .777;
+
+  float surfaceNoiseSample = texture2D(uNoiseTex, newUV).r;
 
   surfaceNoiseSample = step(surfaceNoiseCutoff, surfaceNoiseSample);
 
   vec4 waterColor = mix(shalllowColor, deepColor, diffDepth / 1.);
 
   csm_FragColor = waterColor + surfaceNoiseSample;
+
+  // csm_FragColor.rgb = vec3(existingNormal);
+
 }
