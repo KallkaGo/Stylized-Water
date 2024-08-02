@@ -26,18 +26,20 @@ import {
   UnsignedByteType,
 } from "three";
 import CustomMaterial from "three-custom-shader-material/vanilla";
-import vertexShader from "../shader/vertex.glsl";
-import fragmentShader from "../shader/fragment.glsl";
+import vertexShader from "../shader/water/vertex.glsl";
+import fragmentShader from "../shader/water/fragment.glsl";
 import { useDepthTexturePers } from "@utils/useDepthTexturePers";
 import { useNormalBuffer } from "@utils/useNormalBuffer";
 import { useControls } from "leva";
 import {
   BrightnessContrast,
+  ColorAverage,
   EffectComposer,
   SMAA,
   ToneMapping,
 } from "@react-three/postprocessing";
 import { BlendFunction } from "postprocessing";
+import GTToneMap from "../effect/GTToneMap";
 
 const Sketch = () => {
   const noiseTex = useTexture("/textures/PerlinNoise.png");
@@ -104,6 +106,46 @@ const Sketch = () => {
     uniforms.uNormalTex.value = normalTexture;
   });
 
+  const gtProps = useControls("ToneMapGT", {
+    MaxLuminanice: {
+      value: 2,
+      min: 1,
+      max: 100,
+      step: 0.01,
+    },
+    Contrast: {
+      value: 1,
+      min: 1,
+      max: 5,
+      step: 0.01,
+    },
+    LinearSectionStart: {
+      value: 0.49,
+      min: 0,
+      max: 1,
+      step: 0.01,
+    },
+    LinearSectionLength: {
+      value: 0.12,
+      min: 0,
+      max: 0.99,
+      step: 0.01,
+    },
+    BlackTightnessC: {
+      value: 1.69,
+      min: 1,
+      max: 3,
+      step: 0.01,
+    },
+    BlackTightnessB: {
+      value: 0.0,
+      min: 0,
+      max: 1,
+      step: 0.25,
+    },
+    Enabled: true,
+  });
+
   return (
     <>
       <OrbitControls domElement={controlDom} minDistance={2} maxDistance={5} />
@@ -120,7 +162,8 @@ const Sketch = () => {
         frameBufferType={HalfFloatType}
         multisampling={0}
       >
-        <SMAA blendFunction={BlendFunction.SOFT_LIGHT}   />
+        <SMAA/>
+        <GTToneMap {...gtProps} />
       </EffectComposer>
     </>
   );
