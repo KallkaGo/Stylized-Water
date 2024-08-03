@@ -24,10 +24,13 @@ import {
   Texture,
   Uniform,
   UnsignedByteType,
+  Vector3,
 } from "three";
 import CustomMaterial from "three-custom-shader-material/vanilla";
 import vertexShader from "../shader/water/vertex.glsl";
 import fragmentShader from "../shader/water/fragment.glsl";
+import shorelineVertex from "../shader/shoreline/vertex.glsl";
+import shorelineFragment from "../shader/shoreline/fragment.glsl";
 import { useDepthTexturePers } from "@utils/useDepthTexturePers";
 import { useNormalBuffer } from "@utils/useNormalBuffer";
 import { useControls } from "leva";
@@ -40,15 +43,25 @@ import {
 } from "@react-three/postprocessing";
 import { BlendFunction } from "postprocessing";
 import GTToneMap from "../effect/GTToneMap";
+import { utimes } from "fs";
 
 const Sketch = () => {
   const noiseTex = useTexture("/textures/PerlinNoise.png");
   noiseTex.wrapS = noiseTex.wrapT = RepeatWrapping;
 
+  const causticsTex = useTexture("/textures/caustics.png");
+  causticsTex.wrapS = causticsTex.wrapT = RepeatWrapping;
+
   const distortionTex = useTexture("/textures/WaterDistortion.png");
 
   const scene = useThree((state) => state.scene);
   const controlDom = useInteractStore((state) => state.controlDom);
+
+  const params = useRef({
+    waterPos: new Vector3(0, 0, 0),
+    waterMesh: undefined as Mesh | undefined,
+    shorelioneMesh: undefined as Mesh | undefined,
+  });
 
   const uniforms = useMemo(
     () => ({
@@ -66,6 +79,15 @@ const Sketch = () => {
     []
   );
 
+  const shorelineUniforms = useMemo(
+    () => ({
+      uPosY: new Uniform(0),
+      uCausticsTex: new Uniform(causticsTex),
+      uTime: new Uniform(0),
+    }),
+    []
+  );
+
   useControls("Water", {
     FoamColor: {
       value: "white",
@@ -75,6 +97,7 @@ const Sketch = () => {
 
   useEffect(() => {
     const waterMesh = scene.getObjectByName("Water") as Mesh;
+    const shorelioneMesh = scene.getObjectByName("Shoreline") as Mesh;
     if (waterMesh) {
       const mat = waterMesh.material as MeshToonMaterial;
       const newMat = new CustomMaterial({
@@ -87,9 +110,24 @@ const Sketch = () => {
         depthWrite: false,
         blending: NormalBlending,
       });
-
+      params.current.waterMesh = waterMesh;
       waterMesh.material = newMat;
     }
+
+    if (shorelioneMesh) {
+      const mat = shorelioneMesh.material as MeshStandardMaterial;
+      const newMat = new CustomMaterial({
+        baseMaterial: mat,
+        uniforms: shorelineUniforms,
+        vertexShader: shorelineVertex,
+        fragmentShader: shorelineFragment,
+        silent: true,
+        map: mat.map,
+      });
+
+      shorelioneMesh.material = newMat;
+    }
+
     useLoadedStore.setState({ ready: true });
   }, []);
 
@@ -99,6 +137,12 @@ const Sketch = () => {
 
   useFrame((state, delta) => {
     delta %= 1;
+    const { waterMesh, waterPos } = params.current;
+    if (waterMesh) {
+      waterMesh.getWorldPosition(waterPos);
+      shorelineUniforms.uPosY.value = waterPos.y;
+      shorelineUniforms.uTime.value += delta;
+    }
     uniforms.uNear.value = state.camera.near;
     uniforms.uFar.value = state.camera.far;
     uniforms.uTime.value += delta;
@@ -162,7 +206,7 @@ const Sketch = () => {
         frameBufferType={HalfFloatType}
         multisampling={0}
       >
-        <SMAA/>
+        <SMAA />
         <GTToneMap {...gtProps} />
       </EffectComposer>
     </>

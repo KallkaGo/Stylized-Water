@@ -56,7 +56,7 @@ void main() {
 
   diffDepth = clamp(diffDepth, 0.0, 1.0);
 
-  diffDepth *= step(0.01, diffDepth); 
+  diffDepth *= step(0.01, diffDepth);
 
   vec4 shalllowColor = vec4(0.325, 0.807, 0.971, 0.725);
 
