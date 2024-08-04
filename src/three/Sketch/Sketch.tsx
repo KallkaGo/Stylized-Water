@@ -1,5 +1,6 @@
 import {
   Environment,
+  Float,
   OrbitControls,
   useEnvironment,
   useTexture,
@@ -19,7 +20,6 @@ import {
   MeshStandardMaterial,
   MeshToonMaterial,
   NormalBlending,
-  NoToneMapping,
   RepeatWrapping,
   Texture,
   Uniform,
@@ -34,16 +34,8 @@ import shorelineFragment from "../shader/shoreline/fragment.glsl";
 import { useDepthTexturePers } from "@utils/useDepthTexturePers";
 import { useNormalBuffer } from "@utils/useNormalBuffer";
 import { useControls } from "leva";
-import {
-  BrightnessContrast,
-  ColorAverage,
-  EffectComposer,
-  SMAA,
-  ToneMapping,
-} from "@react-three/postprocessing";
-import { BlendFunction } from "postprocessing";
+import { EffectComposer, SMAA } from "@react-three/postprocessing";
 import GTToneMap from "../effect/GTToneMap";
-import { utimes } from "fs";
 
 const Sketch = () => {
   const noiseTex = useTexture("/textures/PerlinNoise.png");
@@ -51,6 +43,7 @@ const Sketch = () => {
 
   const causticsTex = useTexture("/textures/caustics.png");
   causticsTex.wrapS = causticsTex.wrapT = RepeatWrapping;
+  causticsTex.repeat.set(3, 3);
 
   const distortionTex = useTexture("/textures/WaterDistortion.png");
 
@@ -199,11 +192,13 @@ const Sketch = () => {
         <Rock />
         <Log />
         <Pond />
-        <Lifesaver />
+        <Float>
+          <Lifesaver />
+        </Float>
       </group>
       <EffectComposer
         disableNormalPass
-        frameBufferType={HalfFloatType}
+        frameBufferType={UnsignedByteType}
         multisampling={0}
       >
         <SMAA />

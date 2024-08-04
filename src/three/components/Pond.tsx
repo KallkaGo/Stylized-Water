@@ -13,19 +13,14 @@ const Pond = () => {
   tex.colorSpace = SRGBColorSpace;
   tex.wrapS = tex.wrapT = RepeatWrapping;
 
-  useEffect(() => {
-    model.traverse((child) => {
-      if ((child as Mesh).isMesh) {
-        if (child.name !== "Water") {
-          const mat = (child as Mesh).material as MeshStandardMaterial;
-          mat.map = tex;
-        }
-        if (child.name === "Water") {
-          // child.visible = false;
-        }
+  model.traverse((child) => {
+    if ((child as Mesh).isMesh) {
+      if (child.name !== "Water") {
+        const mat = (child as Mesh).material as MeshStandardMaterial;
+        mat.map = tex;
       }
-    });
-  }, []);
+    }
+  });
 
   return (
     <>

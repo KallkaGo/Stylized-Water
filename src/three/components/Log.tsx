@@ -7,14 +7,12 @@ const Log = () => {
   const tex = useTexture("/textures/Log.png");
   tex.colorSpace = SRGBColorSpace;
 
-  useEffect(() => {
-    model.traverse((child) => {
-      if ((child as Mesh).isMesh) {
-        const mat = (child as Mesh).material as MeshStandardMaterial;
-        mat.map = tex;
-      }
-    });
-  }, []);
+  model.traverse((child) => {
+    if ((child as Mesh).isMesh) {
+      const mat = (child as Mesh).material as MeshStandardMaterial;
+      mat.map = tex;
+    }
+  });
 
   return <primitive object={model} position={[100, 0, 50]}></primitive>;
 };
