@@ -30,6 +30,7 @@ const useDepthTexturePers = (width: number, height: number, config: iConfig) => 
 
 
   useFrame((state, delta) => {
+    /* if  ignoreObjects is Object3D array need re-render but it will cause rendering delays, ex: At the end of the loading page, the water surface is still white */
     const { gl, scene } = state
     if (ignoreObjects.some((item) => !item.current)) return
     const dpr = gl.getPixelRatio()
