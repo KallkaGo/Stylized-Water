@@ -6,7 +6,7 @@ import {
   useTexture,
 } from "@react-three/drei";
 import { useInteractStore, useLoadedStore } from "@utils/Store";
-import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { RefObject, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import Rock from "../components/Rock";
 import Log from "../components/Log";
 import Pond from "../components/Pond";
@@ -20,6 +20,7 @@ import {
   MeshStandardMaterial,
   MeshToonMaterial,
   NormalBlending,
+  Object3D,
   RepeatWrapping,
   Texture,
   Uniform,
@@ -58,9 +59,11 @@ const Sketch = () => {
 
   const params = useRef({
     waterPos: new Vector3(0, 0, 0),
-    waterMesh: undefined as Mesh | undefined,
-    shorelioneMesh: undefined as Mesh | undefined,
   });
+
+  const waterMeshRef = useRef<Mesh | undefined>();
+
+  const shorelioneMeshRef = useRef<Mesh | undefined>();
 
   const uniforms = useMemo(
     () => ({
@@ -161,7 +164,7 @@ const Sketch = () => {
           },
         },
       });
-      params.current.waterMesh = waterMesh;
+      waterMeshRef.current = waterMesh;
       waterMesh.material = newMat;
     }
 
@@ -182,13 +185,16 @@ const Sketch = () => {
     useLoadedStore.setState({ ready: true });
   }, []);
 
-  const { depthTexture } = useDepthTexturePers(innerWidth, innerHeight);
+  const { depthTexture } = useDepthTexturePers(innerWidth, innerHeight, {
+    ignoreObjects: [waterMeshRef],
+  });
 
   const { normalTexture } = useNormalBuffer();
 
   useFrame((state, delta) => {
     delta %= 1;
-    const { waterMesh, waterPos } = params.current;
+    const { waterPos } = params.current;
+    const waterMesh = waterMeshRef.current;
     if (waterMesh) {
       waterMesh.getWorldPosition(waterPos);
       shorelineUniforms.uPosY.value = waterPos.y;

@@ -1,16 +1,20 @@
 import { useFBO } from "@react-three/drei"
 import { useFrame, useThree } from "@react-three/fiber"
-import { useMemo } from "react"
-import { DepthFormat, DepthTexture, MeshDepthMaterial, NearestFilter, RGBAFormat, ShaderMaterial, Texture, Uniform, UnsignedByteType, UnsignedShortType } from "three"
+import { MutableRefObject, RefObject, useMemo } from "react"
+import { DepthFormat, DepthTexture, MeshDepthMaterial, NearestFilter, Object3D, Object3DEventMap, RGBAFormat, ShaderMaterial, Texture, Uniform, UnsignedByteType, UnsignedShortType } from "three"
 import { FullScreenQuad } from "three/examples/jsm/Addons.js"
 
 
+interface iConfig {
+  ignoreObjects?: MutableRefObject<Object3D<Object3DEventMap> | undefined>[]
+}
 
 
-
-const useDepthTexturePers = (width: number, height: number) => {
+const useDepthTexturePers = (width: number, height: number, config: iConfig) => {
 
   const camera = useThree((state) => state.camera)
+
+  const { ignoreObjects = [] } = config
 
   const rt = useFBO(width, height, {
     depthBuffer: true,
@@ -27,16 +31,19 @@ const useDepthTexturePers = (width: number, height: number) => {
 
   useFrame((state, delta) => {
     const { gl, scene } = state
-    const water = scene.getObjectByName("Water")
-    if (!water) return
+    if (ignoreObjects.some((item) => !item.current)) return
     const dpr = gl.getPixelRatio()
     rt.setSize(innerWidth * dpr, innerHeight * dpr)
-    water.visible = false
+    ignoreObjects.forEach((item) => {
+      item.current!.visible = false
+    })
     scene.overrideMaterial = material
     gl.setRenderTarget(rt)
     gl.render(scene, camera)
     gl.setRenderTarget(null)
-    water.visible = true
+    ignoreObjects.forEach((item) => {
+      item.current!.visible = true
+    })
     scene.overrideMaterial = null
   })
 
