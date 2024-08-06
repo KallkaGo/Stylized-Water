@@ -6,7 +6,7 @@ import {
   useTexture,
 } from "@react-three/drei";
 import { useInteractStore, useLoadedStore } from "@utils/Store";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import Rock from "../components/Rock";
 import Log from "../components/Log";
 import Pond from "../components/Pond";
@@ -47,6 +47,12 @@ const Sketch = () => {
 
   const distortionTex = useTexture("/textures/WaterDistortion.png");
 
+  const flowTex = useTexture("/textures/flowmap.png");
+  flowTex.wrapS = flowTex.wrapT = RepeatWrapping;
+
+  const normalTex = useTexture("/textures/water-normal.png");
+  normalTex.wrapS = normalTex.wrapT = RepeatWrapping;
+
   const scene = useThree((state) => state.scene);
   const controlDom = useInteractStore((state) => state.controlDom);
 
@@ -68,6 +74,11 @@ const Sketch = () => {
       uFoamMaximumDistance: new Uniform(0.3),
       uFoamMinimumDistance: new Uniform(0.03),
       uFoamColor: new Uniform(new Color("white")),
+      uFlowTex: new Uniform(flowTex),
+      uSurfaceNormalTex: new Uniform(normalTex),
+      uTiling: new Uniform(0),
+      uSpeed: new Uniform(0),
+      uFlowOffset: new Uniform(0),
     }),
     []
   );
@@ -86,15 +97,36 @@ const Sketch = () => {
       value: "white",
       onChange: (v) => uniforms.uFoamColor.value.set(v),
     },
+    tiling: {
+      value: 0.3,
+      min: 0,
+      max: 10,
+      step: 0.1,
+      onChange: (v) => (uniforms.uTiling.value = v),
+    },
+    speed: {
+      value: 0.3,
+      min: 0,
+      max: 5,
+      step: 0.01,
+      onChange: (v) => (uniforms.uSpeed.value = v),
+    },
+    flowOffset: {
+      value: -0.5,
+      min: -1,
+      max: 1,
+      step: 0.01,
+      onChange: (v) => (uniforms.uFlowOffset.value = v),
+    },
   });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const waterMesh = scene.getObjectByName("Water") as Mesh;
     const shorelioneMesh = scene.getObjectByName("Shoreline") as Mesh;
     if (waterMesh) {
       const mat = waterMesh.material as MeshToonMaterial;
       const newMat = new CustomMaterial({
-        baseMaterial: MeshBasicMaterial,
+        baseMaterial: MeshStandardMaterial,
         uniforms,
         vertexShader: vertexShader,
         fragmentShader: fragmentShader,
@@ -102,6 +134,32 @@ const Sketch = () => {
         silent: true,
         depthWrite: false,
         blending: NormalBlending,
+        patchMap: {
+          csm_SurfaceNormal: {
+            "#include <normal_fragment_begin>": /* glsl */ `
+
+                #include <normal_fragment_begin>
+                vec2 flowVector = texture2D(uFlowTex, vUv).rg * 2. - 1.;
+
+                float noise = texture2D(uFlowTex, vUv).a;
+                
+                vec3 uvwA = flowUVW(vUv, flowVector, uTime * uSpeed + noise, false, uTiling);
+                vec3 uvwB = flowUVW(vUv, flowVector, uTime * uSpeed + noise, true, uTiling);
+
+                vec3 normalA = UnpackNormal(uSurfaceNormalTex, uvwA.xy) * uvwA.z;
+                vec3 normalB = UnpackNormal(uSurfaceNormalTex, uvwB.xy) * uvwB.z;
+
+                vec3 oriNor = UnpackNormal(uSurfaceNormalTex, vUv);
+
+                vec3 surface = normalize(normalA + normalB);
+
+                mat3 tbn = getTangentFrame( - vViewPosition, normal, vUv);
+
+                normal = normalize(tbn * surface);
+
+            `,
+          },
+        },
       });
       params.current.waterMesh = waterMesh;
       waterMesh.material = newMat;
@@ -187,7 +245,8 @@ const Sketch = () => {
     <>
       <OrbitControls domElement={controlDom} minDistance={2} maxDistance={5} />
       <color attach={"background"} args={["ivory"]} />
-      <ambientLight intensity={5} />
+      <ambientLight intensity={3} />
+      <directionalLight position={[6, 4, 5]} />
       <group scale={0.01 * 0.7}>
         <Rock />
         <Log />

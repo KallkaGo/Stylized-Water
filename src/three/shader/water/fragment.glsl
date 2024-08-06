@@ -1,4 +1,4 @@
-#include <packing>
+// #include <packing>
 
 #define SMOOTHSTEP_AA 0.01
 
@@ -15,6 +15,11 @@ uniform float uTime;
 uniform float uFoamMaximumDistance;
 uniform float uFoamMinimumDistance;
 uniform vec3 uFoamColor;
+uniform sampler2D uFlowTex;
+uniform sampler2D uSurfaceNormalTex;
+uniform float uSpeed;
+uniform float uFlowOffset;
+uniform float uTiling;
 
 float LinearEyeDepth(const in float depth) {
   float _ZBufferParamsX = 1. - uFar / uNear;
@@ -42,7 +47,51 @@ vec4 alphaBlend(vec4 top, vec4 bottom) {
   return vec4(color, alpha);
 }
 
+vec3 flowUVW(vec2 uv, vec2 flowVector, float time, bool flowB, float tiling) {
+  float phaseOffset = flowB ? 0.5 : 0.;
+  float progress = fract(time + phaseOffset);
+  vec3 uvw;
+  // uvw.xy = uv - flowVector * progress + phaseOffset;
+  uvw.xy = uv - flowVector * (progress + uFlowOffset);
+  uvw.xy * = tiling;
+  uvw.xy += phaseOffset;
+  uvw.z = 1. - abs(1. - 2. * progress);
+  return uvw;
+}
+
+vec3 UnpackNormal(sampler2D tex, vec2 uv) {
+  vec4 normalTex = texture2D(tex, uv);
+  vec3 normalTs = vec3(normalTex.rg * 2. - 1., 0.);
+  normalTs.z = sqrt(1. - dot(normalTs.xy, normalTs.xy));
+  return normalTs;
+}
+
+mat3 getTangentFrame(vec3 eye_pos, vec3 surf_norm, vec2 uv) {
+
+  vec3 q0 = dFdx(eye_pos.xyz);
+  vec3 q1 = dFdy(eye_pos.xyz);
+  vec2 st0 = dFdx(uv.st);
+  vec2 st1 = dFdy(uv.st);
+
+  vec3 N = surf_norm; // normalized
+
+  vec3 q1perp = cross(q1, N);
+  vec3 q0perp = cross(N, q0);
+
+  vec3 T = q1perp * st0.x + q0perp * st1.x;
+  vec3 B = q1perp * st0.y + q0perp * st1.y;
+
+  float det = max(dot(T, T), dot(B, B));
+  float scale = (det == 0.0) ? 0.0 : inversesqrt(det);
+
+  return mat3(T * scale, B * scale, N);
+
+}
+
 void main() {
+
+  vec3 csm_SurfaceNormal;
+
   vec2 scrPos = vScreenPos.xy / vScreenPos.w;
 
   float depth = readDepth(uDepthTex, scrPos);
@@ -98,6 +147,8 @@ void main() {
 
   // csm_FragColor = surfaceNoiseColor + waterColor;
 
-  // csm_DiffuseColor = alphaBlend(surfaceNoiseColor, waterColor);
-  csm_FragColor = alphaBlend(surfaceNoiseColor, waterColor);
+  csm_DiffuseColor = alphaBlend(surfaceNoiseColor, waterColor);
+  // csm_FragColor = alphaBlend(surfaceNoiseColor, waterColor);
+  csm_Metalness = 0.;
+  csm_Roughness = 1.;
 }
