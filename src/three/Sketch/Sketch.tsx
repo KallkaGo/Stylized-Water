@@ -17,6 +17,7 @@ import {
   HalfFloatType,
   Mesh,
   MeshBasicMaterial,
+  MeshPhysicalMaterial,
   MeshStandardMaterial,
   MeshToonMaterial,
   NormalBlending,
@@ -25,6 +26,7 @@ import {
   Texture,
   Uniform,
   UnsignedByteType,
+  Vector2,
   Vector3,
 } from "three";
 import CustomMaterial from "three-custom-shader-material/vanilla";
@@ -54,6 +56,9 @@ const Sketch = () => {
   const normalTex = useTexture("/textures/water-normal.png");
   normalTex.wrapS = normalTex.wrapT = RepeatWrapping;
 
+  const derivativeHeightTex = useTexture("/textures/derivativeHeight.png");
+  derivativeHeightTex.wrapS = derivativeHeightTex.wrapT = RepeatWrapping;
+
   const scene = useThree((state) => state.scene);
   const controlDom = useInteractStore((state) => state.controlDom);
 
@@ -71,6 +76,7 @@ const Sketch = () => {
       uNoiseTex: new Uniform(noiseTex),
       uDisortTex: new Uniform(distortionTex),
       uNormalTex: new Uniform(undefined) as Uniform<Texture | undefined>,
+      uDerivativeHeightTex: new Uniform(derivativeHeightTex),
       uNear: new Uniform(0),
       uFar: new Uniform(0),
       uTime: new Uniform(0),
@@ -82,6 +88,9 @@ const Sketch = () => {
       uTiling: new Uniform(0),
       uSpeed: new Uniform(0),
       uFlowOffset: new Uniform(0),
+      uFlowStrength: new Uniform(0),
+      uHeightScaleModulated: new Uniform(0),
+      uHightScale: new Uniform(0),
     }),
     []
   );
@@ -108,18 +117,39 @@ const Sketch = () => {
       onChange: (v) => (uniforms.uTiling.value = v),
     },
     speed: {
-      value: 0.3,
+      value: 0.15,
       min: 0,
       max: 5,
       step: 0.01,
       onChange: (v) => (uniforms.uSpeed.value = v),
     },
     flowOffset: {
-      value: -0.5,
+      value: 0,
       min: -1,
       max: 1,
       step: 0.01,
       onChange: (v) => (uniforms.uFlowOffset.value = v),
+    },
+    flowStrength: {
+      value: 0.15,
+      min: 0,
+      max: 10,
+      step: 0.01,
+      onChange: (v) => (uniforms.uFlowStrength.value = v),
+    },
+    heightScale: {
+      value: 3.5,
+      min: 0,
+      max: 20,
+      step: 0.01,
+      onChange: (v) => (uniforms.uHightScale.value = v),
+    },
+    heightScaleModulated: {
+      value: 9,
+      min: 0,
+      max: 20,
+      step: 0.01,
+      onChange: (v) => (uniforms.uHeightScaleModulated.value = v),
     },
   });
 
@@ -129,7 +159,7 @@ const Sketch = () => {
     if (waterMesh) {
       const mat = waterMesh.material as MeshToonMaterial;
       const newMat = new CustomMaterial({
-        baseMaterial: MeshStandardMaterial,
+        baseMaterial: MeshPhysicalMaterial,
         uniforms,
         vertexShader: vertexShader,
         fragmentShader: fragmentShader,
@@ -137,6 +167,8 @@ const Sketch = () => {
         silent: true,
         depthWrite: false,
         blending: NormalBlending,
+        sheen: 0.5,
+        ior: 2,
         patchMap: {
           csm_SurfaceNormal: {
             "#include <normal_fragment_begin>": /* glsl */ `
@@ -144,21 +176,32 @@ const Sketch = () => {
                 #include <normal_fragment_begin>
                 vec2 flowVector = texture2D(uFlowTex, vUv).rg * 2. - 1.;
 
+                flowVector *= uFlowStrength;
+                
+
                 float noise = texture2D(uFlowTex, vUv).a;
                 
                 vec3 uvwA = flowUVW(vUv, flowVector, uTime * uSpeed + noise, false, uTiling);
                 vec3 uvwB = flowUVW(vUv, flowVector, uTime * uSpeed + noise, true, uTiling);
 
-                vec3 normalA = UnpackNormal(uSurfaceNormalTex, uvwA.xy) * uvwA.z;
-                vec3 normalB = UnpackNormal(uSurfaceNormalTex, uvwB.xy) * uvwB.z;
+                // vec3 normalA = UnpackNormal(uSurfaceNormalTex, uvwA.xy) * uvwA.z;
+                // vec3 normalB = UnpackNormal(uSurfaceNormalTex, uvwB.xy) * uvwB.z;
 
-                vec3 oriNor = UnpackNormal(uSurfaceNormalTex, vUv);
+                float finalHeightScale = length(flowVector) * uHeightScaleModulated + uHightScale;
 
-                vec3 surface = normalize(normalA + normalB);
+                vec3 dhA = UnpackDerivativeHeight(texture2D(uDerivativeHeightTex, uvwA.xy)) * (uvwA.z * finalHeightScale);
+
+                vec3 dhB = UnpackDerivativeHeight(texture2D(uDerivativeHeightTex, uvwB.xy)) * (uvwB.z * finalHeightScale);
+
+                vec3 oriNor = UnpackNormal(uSurfaceNormalTex, vUv*2.);
+
+                // vec3 surface = normalize(normalA + normalB);
 
                 mat3 tbn = getTangentFrame( - vViewPosition, normal, vUv);
 
-                normal = normalize(tbn * surface);
+                normal = normalize(tbn * vec3(-(dhA.xy + dhB.xy), 1.));
+
+                // normal = oriNor;
 
             `,
           },
@@ -251,8 +294,8 @@ const Sketch = () => {
     <>
       <OrbitControls domElement={controlDom} minDistance={2} maxDistance={5} />
       <color attach={"background"} args={["ivory"]} />
-      <ambientLight intensity={3} />
-      <directionalLight position={[6, 4, 5]} />
+      <ambientLight intensity={2.5} />
+      <directionalLight position={[-6, 4, -5]} />
       <group scale={0.01 * 0.7}>
         <Rock />
         <Log />

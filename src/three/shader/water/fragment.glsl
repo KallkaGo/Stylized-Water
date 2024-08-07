@@ -17,9 +17,13 @@ uniform float uFoamMinimumDistance;
 uniform vec3 uFoamColor;
 uniform sampler2D uFlowTex;
 uniform sampler2D uSurfaceNormalTex;
+uniform sampler2D uDerivativeHeightTex;
+uniform float uHeightScaleModulated;
+uniform float uHightScale;
 uniform float uSpeed;
 uniform float uFlowOffset;
 uniform float uTiling;
+uniform float uFlowStrength;
 
 float LinearEyeDepth(const in float depth) {
   float _ZBufferParamsX = 1. - uFar / uNear;
@@ -64,6 +68,12 @@ vec3 UnpackNormal(sampler2D tex, vec2 uv) {
   vec3 normalTs = vec3(normalTex.rg * 2. - 1., 0.);
   normalTs.z = sqrt(1. - dot(normalTs.xy, normalTs.xy));
   return normalTs;
+}
+
+vec3 UnpackDerivativeHeight(vec4 textureData) {
+  vec3 dh = textureData.agb;
+  dh.xy = dh.xy * 2. - 1.;
+  return dh;
 }
 
 mat3 getTangentFrame(vec3 eye_pos, vec3 surf_norm, vec2 uv) {
@@ -149,6 +159,6 @@ void main() {
 
   csm_DiffuseColor = alphaBlend(surfaceNoiseColor, waterColor);
   // csm_FragColor = alphaBlend(surfaceNoiseColor, waterColor);
-  csm_Metalness = 0.;
-  csm_Roughness = 1.;
+  csm_Metalness = 0.0;
+  csm_Roughness = .35;
 }
