@@ -1,4 +1,5 @@
 # Stylized-Water
 create a stylized water shader in Webgl
-![image](https://github.com/user-attachments/assets/c76c7d0f-38a0-4d6d-a7c0-7b7104cb98ac)
+![26ffcd8d7927787403d65eda92cd6bb3](https://github.com/user-attachments/assets/206999ae-3970-4b7d-ae81-619e3ef8e2a8)
+
 
