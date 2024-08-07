@@ -199,6 +199,7 @@ const Sketch = () => {
 
                 mat3 tbn = getTangentFrame( - vViewPosition, normal, vUv);
 
+                // https://www.yuque.com/u33646201/wh3mt6/abzffwzqynfcb5gm#WoGKk
                 normal = normalize(tbn * vec3(-(dhA.xy + dhB.xy), 1.));
 
                 // normal = oriNor;
