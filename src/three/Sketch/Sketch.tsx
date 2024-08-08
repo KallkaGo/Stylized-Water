@@ -1,12 +1,10 @@
 import {
-  Environment,
   Float,
   OrbitControls,
-  useEnvironment,
   useTexture,
 } from "@react-three/drei";
 import { useInteractStore, useLoadedStore } from "@utils/Store";
-import { RefObject, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { useEffect,  useMemo, useRef } from "react";
 import Rock from "../components/Rock";
 import Log from "../components/Log";
 import Pond from "../components/Pond";
@@ -14,19 +12,15 @@ import Lifesaver from "../components/Lifesaver";
 import { useFrame, useThree } from "@react-three/fiber";
 import {
   Color,
-  HalfFloatType,
   Mesh,
-  MeshBasicMaterial,
   MeshPhysicalMaterial,
   MeshStandardMaterial,
   MeshToonMaterial,
   NormalBlending,
-  Object3D,
   RepeatWrapping,
   Texture,
   Uniform,
   UnsignedByteType,
-  Vector2,
   Vector3,
 } from "three";
 import CustomMaterial from "three-custom-shader-material/vanilla";
@@ -41,6 +35,7 @@ import { EffectComposer, SMAA } from "@react-three/postprocessing";
 import GTToneMap from "../effect/GTToneMap";
 
 const Sketch = () => {
+
   const noiseTex = useTexture("/textures/PerlinNoise.png");
   noiseTex.wrapS = noiseTex.wrapT = RepeatWrapping;
 
@@ -104,56 +99,7 @@ const Sketch = () => {
     []
   );
 
-  useControls("Water", {
-    FoamColor: {
-      value: "white",
-      onChange: (v) => uniforms.uFoamColor.value.set(v),
-    },
-    tiling: {
-      value: 0.3,
-      min: 0,
-      max: 10,
-      step: 0.1,
-      onChange: (v) => (uniforms.uTiling.value = v),
-    },
-    speed: {
-      value: 0.15,
-      min: 0,
-      max: 5,
-      step: 0.01,
-      onChange: (v) => (uniforms.uSpeed.value = v),
-    },
-    flowOffset: {
-      value: 0,
-      min: -1,
-      max: 1,
-      step: 0.01,
-      onChange: (v) => (uniforms.uFlowOffset.value = v),
-    },
-    flowStrength: {
-      value: 0.15,
-      min: 0,
-      max: 10,
-      step: 0.01,
-      onChange: (v) => (uniforms.uFlowStrength.value = v),
-    },
-    heightScale: {
-      value: 3.5,
-      min: 0,
-      max: 20,
-      step: 0.01,
-      onChange: (v) => (uniforms.uHightScale.value = v),
-    },
-    heightScaleModulated: {
-      value: 9,
-      min: 0,
-      max: 20,
-      step: 0.01,
-      onChange: (v) => (uniforms.uHeightScaleModulated.value = v),
-    },
-  });
-
-  useLayoutEffect(() => {
+  useEffect(() => {
     const waterMesh = scene.getObjectByName("Water") as Mesh;
     const shorelioneMesh = scene.getObjectByName("Shoreline") as Mesh;
     if (waterMesh) {
@@ -249,6 +195,55 @@ const Sketch = () => {
     uniforms.uTime.value += delta;
     uniforms.uDepthTex.value = depthTexture;
     uniforms.uNormalTex.value = normalTexture;
+  });
+
+  useControls("Water", {
+    FoamColor: {
+      value: "white",
+      onChange: (v) => uniforms.uFoamColor.value.set(v),
+    },
+    tiling: {
+      value: 0.3,
+      min: 0,
+      max: 10,
+      step: 0.1,
+      onChange: (v) => (uniforms.uTiling.value = v),
+    },
+    speed: {
+      value: 0.15,
+      min: 0,
+      max: 5,
+      step: 0.01,
+      onChange: (v) => (uniforms.uSpeed.value = v),
+    },
+    flowOffset: {
+      value: 0,
+      min: -1,
+      max: 1,
+      step: 0.01,
+      onChange: (v) => (uniforms.uFlowOffset.value = v),
+    },
+    flowStrength: {
+      value: 0.15,
+      min: 0,
+      max: 10,
+      step: 0.01,
+      onChange: (v) => (uniforms.uFlowStrength.value = v),
+    },
+    heightScale: {
+      value: 3.5,
+      min: 0,
+      max: 20,
+      step: 0.01,
+      onChange: (v) => (uniforms.uHightScale.value = v),
+    },
+    heightScaleModulated: {
+      value: 9,
+      min: 0,
+      max: 20,
+      step: 0.01,
+      onChange: (v) => (uniforms.uHeightScaleModulated.value = v),
+    },
   });
 
   const gtProps = useControls("ToneMapGT", {

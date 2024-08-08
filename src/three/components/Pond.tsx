@@ -12,7 +12,6 @@ const Pond = () => {
   const tex = useTexture("/textures/Shoreline.png");
   tex.colorSpace = SRGBColorSpace;
   tex.wrapS = tex.wrapT = RepeatWrapping;
-
   model.traverse((child) => {
     if ((child as Mesh).isMesh) {
       if (child.name !== "Water") {
@@ -21,12 +20,7 @@ const Pond = () => {
       }
     }
   });
-
-  return (
-    <>
-      <primitive object={model} position={[0, 0, 0]}></primitive>;
-    </>
-  );
+  return <primitive object={model} position={[0, 0, 0]} />;
 };
 
 export default Pond;
