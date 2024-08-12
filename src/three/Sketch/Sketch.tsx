@@ -1,10 +1,6 @@
-import {
-  Float,
-  OrbitControls,
-  useTexture,
-} from "@react-three/drei";
+import { Float, OrbitControls, useTexture } from "@react-three/drei";
 import { useInteractStore, useLoadedStore } from "@utils/Store";
-import { useEffect,  useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import Rock from "../components/Rock";
 import Log from "../components/Log";
 import Pond from "../components/Pond";
@@ -35,7 +31,6 @@ import { EffectComposer, SMAA } from "@react-three/postprocessing";
 import GTToneMap from "../effect/GTToneMap";
 
 const Sketch = () => {
-
   const noiseTex = useTexture("/textures/PerlinNoise.png");
   noiseTex.wrapS = noiseTex.wrapT = RepeatWrapping;
 
@@ -139,15 +134,25 @@ const Sketch = () => {
 
                 vec3 dhB = UnpackDerivativeHeight(texture2D(uDerivativeHeightTex, uvwB.xy)) * (uvwB.z * finalHeightScale);
 
+                vec3 dhANormal = vec3(-dhA.xy,1.);
+                
+                vec3 dhBNormal = vec3(-dhB.xy,1.);
+
                 vec3 oriNor = UnpackNormal(uSurfaceNormalTex, vUv*2.);
 
                 // vec3 surface = normalize(normalA + normalB);
 
                 mat3 tbn = getTangentFrame( - vViewPosition, normal, vUv);
 
-                // https://www.yuque.com/u33646201/wh3mt6/abzffwzqynfcb5gm#WoGKk
-                normal = normalize(tbn * vec3(-(dhA.xy + dhB.xy), 1.));
+                /* blending detail*/
+                // https://blog.selfshadow.com/publications/blending-in-detail/
 
+                vec3 blendNormal = normalize(vec3(dhANormal.xy + dhBNormal.xy,dhANormal.z));
+                normal = normalize(tbn * blendNormal);
+
+                // https://www.yuque.com/u33646201/wh3mt6/abzffwzqynfcb5gm#WoGKk
+                // normal = normalize(tbn * vec3(-(dhA.xy + dhB.xy), 1.));
+                
                 // normal = oriNor;
 
             `,
