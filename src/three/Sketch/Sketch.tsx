@@ -1,4 +1,4 @@
-import { Float, OrbitControls, useTexture } from "@react-three/drei";
+import { Float, OrbitControls, useFBO, useTexture } from "@react-three/drei";
 import { useInteractStore, useLoadedStore } from "@utils/Store";
 import { useEffect, useMemo, useRef } from "react";
 import Rock from "../components/Rock";
@@ -17,6 +17,7 @@ import {
   Texture,
   Uniform,
   UnsignedByteType,
+  Vector2,
   Vector3,
 } from "three";
 import CustomMaterial from "three-custom-shader-material/vanilla";
@@ -60,6 +61,10 @@ const Sketch = () => {
 
   const shorelioneMeshRef = useRef<Mesh | undefined>();
 
+  const baseRenderTarget = useFBO(innerWidth, innerHeight, {
+    generateMipmaps: false,
+  });
+
   const uniforms = useMemo(
     () => ({
       uDepthTex: new Uniform(undefined) as Uniform<Texture | undefined>,
@@ -81,6 +86,8 @@ const Sketch = () => {
       uFlowStrength: new Uniform(0),
       uHeightScaleModulated: new Uniform(0),
       uHightScale: new Uniform(0),
+      uBaseTex: new Uniform(undefined) as Uniform<Texture | undefined>,
+      uResolution: new Uniform(new Vector2()),
     }),
     []
   );
@@ -188,18 +195,26 @@ const Sketch = () => {
 
   useFrame((state, delta) => {
     delta %= 1;
+    const { gl, scene, camera } = state;
     const { waterPos } = params.current;
     const waterMesh = waterMeshRef.current;
     if (waterMesh) {
       waterMesh.getWorldPosition(waterPos);
       shorelineUniforms.uPosY.value = waterPos.y;
       shorelineUniforms.uTime.value += delta;
+      waterMesh.visible = false;
+      gl.setRenderTarget(baseRenderTarget);
+      gl.render(scene, camera);
+      waterMesh.visible = true;
+      gl.setRenderTarget(null);
+      uniforms.uBaseTex.value = baseRenderTarget.texture;
     }
     uniforms.uNear.value = state.camera.near;
     uniforms.uFar.value = state.camera.far;
     uniforms.uTime.value += delta;
     uniforms.uDepthTex.value = depthTexture;
     uniforms.uNormalTex.value = normalTexture;
+    uniforms.uResolution.value.set(innerWidth, innerHeight);
   });
 
   useControls("Water", {
@@ -308,7 +323,7 @@ const Sketch = () => {
       <EffectComposer
         disableNormalPass
         frameBufferType={UnsignedByteType}
-        multisampling={0}
+        multisampling={0.0}
       >
         <SMAA />
         <GTToneMap {...gtProps} />
