@@ -1,5 +1,3 @@
-// #include <packing>
-
 #define SMOOTHSTEP_AA 0.01
 
 varying vec4 vScreenPos;
@@ -25,17 +23,33 @@ uniform float uFlowOffset;
 uniform float uTiling;
 uniform float uFlowStrength;
 
-float LinearEyeDepth(const in float depth) {
-  float _ZBufferParamsX = 1. - uFar / uNear;
-  float _ZBufferParamsY = uFar / uNear;
-  float _ZBufferParamsZ = _ZBufferParamsX / uFar;
-  float _ZBufferParamsW = _ZBufferParamsY / uFar;
+struct ZBufferParams {
+  float x;
+  float y;
+  float z;
+  float w;
+} _ZBufferParams;
 
-  return 1.0 / (_ZBufferParamsZ * depth + _ZBufferParamsW);
+void initZBufferParams(float uFar, float uNear) {
+  _ZBufferParams.x = 1. - uFar / uNear;
+  _ZBufferParams.y = uFar / uNear;
+  _ZBufferParams.z = _ZBufferParams.x / uFar;
+  _ZBufferParams.w = _ZBufferParams.y / uFar;
 }
-// https://x.com/gonnavis/status/1377183786949959682 Formula Derivation
+
+// https://blog.csdn.net/wodownload2/article/details/95043746
+float Linear01Depth(float z) {
+  return 1.0 / (_ZBufferParams.x * z + _ZBufferParams.y);
+}
+// Z buffer to linear depth
+float LinearEyeDepth(float z) {
+  return 1.0 / (_ZBufferParams.z * z + _ZBufferParams.w);
+}
+
+// equal to LinearEyeDepth
 float readDepth(sampler2D depthSampler, vec2 coord) {
   float fragCoordZ = texture2D(depthSampler, coord).x;
+  // https://x.com/gonnavis/status/1377183786949959682 Formula Derivation
   float viewZ = perspectiveDepthToViewZ(fragCoordZ, uNear, uFar);
   return viewZToPerspectiveDepth(viewZ, uNear, uFar);
 }
@@ -102,16 +116,16 @@ void main() {
 
   vec3 csm_SurfaceNormal;
 
+  initZBufferParams(uFar, uNear);
+
   vec2 scrPos = vScreenPos.xy / vScreenPos.w;
 
-  float depth = readDepth(uDepthTex, scrPos);
+  float depth = texture2D(uDepthTex, scrPos).x;
 
   /* camera lookat -viewZ */
-  float linearEyeDepth = -getViewZ(depth);
+  float linearEyeDepth = LinearEyeDepth(depth);
 
-  float fragamentLinearDepth = -getViewZ(gl_FragCoord.z);
-
-  float diffDepth = linearEyeDepth - fragamentLinearDepth;
+  float diffDepth = linearEyeDepth - vScreenPos.w;
 
   diffDepth = clamp(diffDepth, 0.0, 1.0);
 
