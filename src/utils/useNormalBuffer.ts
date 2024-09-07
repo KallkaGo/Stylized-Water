@@ -5,7 +5,7 @@ import { MeshNormalMaterial } from "three"
 
 const useNormalBuffer = () => {
 
-  const renderTarget = useFBO(innerWidth, innerHeight,{
+  const renderTarget = useFBO(innerWidth, innerHeight, {
     generateMipmaps: false,
     samples: 16
   })
@@ -14,9 +14,10 @@ const useNormalBuffer = () => {
 
   useFrame((state, delta) => {
     const { scene, gl, camera } = state
+    const dpr = gl.getPixelRatio()
     const water = scene.getObjectByName("Water")
     if (!water) return
-    renderTarget.setSize(innerWidth, innerHeight)
+    renderTarget.setSize(innerWidth * dpr, innerHeight * dpr)
     gl.setRenderTarget(renderTarget)
     scene.overrideMaterial = material
     water.visible = false
