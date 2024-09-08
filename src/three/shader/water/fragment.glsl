@@ -24,7 +24,6 @@ uniform float uFlowOffset;
 uniform float uTiling;
 uniform float uFlowStrength;
 uniform vec2 uResolution;
-uniform float uDpr;
 
 struct ZBufferParams {
   float x;
@@ -125,8 +124,8 @@ void main() {
 
   vec4 baseColor = texture2D(uBaseTex, scrPos);
 
-  float blurRadiusX = (1.0 / uResolution.x * uDpr) * 0.1; // 根据屏幕分辨率调整
-  float blurRadiusY = (1.0 / uResolution.y * uDpr) * 0.1; // 根据屏幕分辨率调整
+  float blurRadiusX = (1.0 / uResolution.x) * 0.1; // 根据屏幕分辨率调整
+  float blurRadiusY = (1.0 / uResolution.y) * 0.1; // 根据屏幕分辨率调整
 
   vec2 offsets[4] = vec2[](vec2(-blurRadiusX, 0.0), vec2(blurRadiusX, 0.0), vec2(0.0, -blurRadiusY), vec2(0.0, blurRadiusY));
   float depth = texture2D(uDepthTex, scrPos).x;
@@ -187,6 +186,6 @@ void main() {
 
   // csm_DiffuseColor = vec4(vec3(depth), 1.);
 
-  // csm_Metalness = 0.0;
-  // csm_Roughness = .35;
+  csm_Metalness = 0.0;
+  csm_Roughness = .35;
 }

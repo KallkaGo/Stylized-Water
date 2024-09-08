@@ -88,7 +88,6 @@ const Sketch = () => {
       uHightScale: new Uniform(0),
       uBaseTex: new Uniform(undefined) as Uniform<Texture | undefined>,
       uResolution: new Uniform(new Vector2()),
-      uDpr: new Uniform(1),
     }),
     []
   );
@@ -156,7 +155,7 @@ const Sketch = () => {
                 // https://blog.selfshadow.com/publications/blending-in-detail/
 
                 vec3 blendNormal = normalize(vec3(dhANormal.xy + dhBNormal.xy,dhANormal.z));
-                // normal = normalize(tbn * blendNormal);
+                normal = normalize(tbn * blendNormal);
 
                 // https://www.yuque.com/u33646201/wh3mt6/abzffwzqynfcb5gm#WoGKk
                 // normal = normalize(tbn * vec3(-(dhA.xy + dhB.xy), 1.));
@@ -210,13 +209,13 @@ const Sketch = () => {
       gl.setRenderTarget(null);
       uniforms.uBaseTex.value = baseRenderTarget.texture;
     }
-    uniforms.uDpr.value = gl.getPixelRatio();
+    const dpr = gl.getPixelRatio();
     uniforms.uNear.value = state.camera.near;
     uniforms.uFar.value = state.camera.far;
     uniforms.uTime.value += delta;
     uniforms.uDepthTex.value = depthTexture;
     uniforms.uNormalTex.value = normalTexture;
-    uniforms.uResolution.value.set(innerWidth, innerHeight);
+    uniforms.uResolution.value.set(innerWidth * dpr, innerHeight * dpr);
   });
 
   useControls("Water", {
