@@ -124,8 +124,8 @@ void main() {
 
   vec4 baseColor = texture2D(uBaseTex, scrPos);
 
-  float blurRadiusX = (1.0 / uResolution.x) * 0.1; // 根据屏幕分辨率调整
-  float blurRadiusY = (1.0 / uResolution.y) * 0.1; // 根据屏幕分辨率调整
+  float blurRadiusX = (1.0 / uResolution.x) * 0.4; // 根据屏幕分辨率调整
+  float blurRadiusY = (1.0 / uResolution.y) * 0.4; // 根据屏幕分辨率调整
 
   vec2 offsets[4] = vec2[](vec2(-blurRadiusX, 0.0), vec2(blurRadiusX, 0.0), vec2(0.0, -blurRadiusY), vec2(0.0, blurRadiusY));
   float depth = texture2D(uDepthTex, scrPos).x;
