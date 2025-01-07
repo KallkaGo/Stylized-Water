@@ -187,5 +187,5 @@ void main() {
   // csm_DiffuseColor = vec4(vec3(depth), 1.);
 
   csm_Metalness = 0.0;
-  csm_Roughness = .35;
+  csm_Roughness = .25;
 }

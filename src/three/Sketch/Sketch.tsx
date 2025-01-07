@@ -8,6 +8,7 @@ import Lifesaver from "../components/Lifesaver";
 import { useFrame, useThree } from "@react-three/fiber";
 import {
   Color,
+  DirectionalLight,
   Mesh,
   MeshPhysicalMaterial,
   MeshStandardMaterial,
@@ -55,11 +56,15 @@ const Sketch = () => {
 
   const params = useRef({
     waterPos: new Vector3(0, 0, 0),
+    lightPos:new Vector3(0, 0, 0),
+    upVec: new Vector3(0, 1, 0),
   });
+
+  const dirLightRef = useRef<DirectionalLight>(null)
 
   const waterMeshRef = useRef<Mesh | undefined>();
 
-  const shorelioneMeshRef = useRef<Mesh | undefined>();
+
 
   const baseRenderTarget = useFBO(innerWidth, innerHeight, {
     generateMipmaps: false,
@@ -113,10 +118,9 @@ const Sketch = () => {
         fragmentShader: fragmentShader,
         transparent: true,
         silent: true,
-        depthWrite: false,
-        blending: NormalBlending,
-        sheen: 0.5,
-        ior: 2,
+        depthWrite: false, 
+        reflectivity:0.7,
+        iridescence:0.5,
         patchMap: {
           csm_SurfaceNormal: {
             "#include <normal_fragment_begin>": /* glsl */ `
@@ -196,7 +200,7 @@ const Sketch = () => {
   useFrame((state, delta) => {
     delta %= 1;
     const { gl, scene, camera } = state;
-    const { waterPos } = params.current;
+    const { waterPos,lightPos,upVec } = params.current;
     const waterMesh = waterMeshRef.current;
     if (waterMesh) {
       waterMesh.getWorldPosition(waterPos);
@@ -216,6 +220,9 @@ const Sketch = () => {
     uniforms.uDepthTex.value = depthTexture;
     uniforms.uNormalTex.value = normalTexture;
     uniforms.uResolution.value.set(innerWidth * dpr, innerHeight * dpr);
+    lightPos.set(camera.position.x, 5, camera.position.z);
+    const pos = lightPos.clone().reflect(upVec).negate();
+    dirLightRef.current!.position.copy(pos);
   });
 
   useControls("Water", {
@@ -224,21 +231,21 @@ const Sketch = () => {
       onChange: (v) => uniforms.uFoamColor.value.set(v),
     },
     tiling: {
-      value: 0.3,
+      value: 1,
       min: 0,
       max: 10,
       step: 0.1,
       onChange: (v) => (uniforms.uTiling.value = v),
     },
     speed: {
-      value: 0.15,
+      value: 0.3,
       min: 0,
       max: 5,
       step: 0.01,
       onChange: (v) => (uniforms.uSpeed.value = v),
     },
     flowOffset: {
-      value: 0,
+      value: -0.45,
       min: -1,
       max: 1,
       step: 0.01,
@@ -252,7 +259,7 @@ const Sketch = () => {
       onChange: (v) => (uniforms.uFlowStrength.value = v),
     },
     heightScale: {
-      value: 3.5,
+      value: 1.63,
       min: 0,
       max: 20,
       step: 0.01,
@@ -312,7 +319,7 @@ const Sketch = () => {
       <OrbitControls domElement={controlDom} minDistance={2} maxDistance={5} />
       <color attach={"background"} args={["ivory"]} />
       <ambientLight intensity={2.5} />
-      <directionalLight position={[-6, 4, -5]} />
+      <directionalLight ref={dirLightRef}/>
       <group scale={0.01 * 0.7}>
         <Rock />
         <Log />
@@ -322,7 +329,7 @@ const Sketch = () => {
         </Float>
       </group>
       <EffectComposer
-        disableNormalPass
+        enableNormalPass ={false}
         frameBufferType={UnsignedByteType}
         multisampling={0}
       >
