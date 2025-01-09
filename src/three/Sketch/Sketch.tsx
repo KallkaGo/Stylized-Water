@@ -160,7 +160,12 @@ const Sketch = () => {
                 /* blending detail*/
                 // https://blog.selfshadow.com/publications/blending-in-detail/
 
-                vec3 blendNormal = normalize(vec3(dhANormal.xy + dhBNormal.xy,dhANormal.z));
+                /* blend_udn */
+                // vec3 blendNormal = normalize(vec3(dhANormal.xy + dhBNormal.xy,dhANormal.z));
+
+                /* blend_whiteout */
+                vec3 blendNormal = normalize(vec3(dhANormal.xy + dhBNormal.xy,dhANormal.z * dhBNormal.z));
+                
                 normal = normalize(tbn * blendNormal);
 
                 // https://www.yuque.com/u33646201/wh3mt6/abzffwzqynfcb5gm#WoGKk
