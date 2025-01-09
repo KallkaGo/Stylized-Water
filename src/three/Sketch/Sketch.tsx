@@ -93,6 +93,8 @@ const Sketch = () => {
       uHightScale: new Uniform(0),
       uBaseTex: new Uniform(undefined) as Uniform<Texture | undefined>,
       uResolution: new Uniform(new Vector2()),
+      uMetalness: new Uniform(0),
+      uRoughness: new Uniform(0),
     }),
     []
   );
@@ -119,7 +121,7 @@ const Sketch = () => {
         transparent: true,
         silent: true,
         depthWrite: false, 
-        reflectivity:0.7,
+        ior:1.333,
         iridescence:0.5,
         patchMap: {
           csm_SurfaceNormal: {
@@ -261,17 +263,32 @@ const Sketch = () => {
     heightScale: {
       value: 1.63,
       min: 0,
-      max: 20,
+      max: 10,
       step: 0.01,
       onChange: (v) => (uniforms.uHightScale.value = v),
     },
     heightScaleModulated: {
       value: 9,
       min: 0,
-      max: 20,
+      max: 10,
       step: 0.01,
       onChange: (v) => (uniforms.uHeightScaleModulated.value = v),
     },
+    metallic: {
+      value: 0,
+      min: 0,
+      max: 1,
+      step: 0.01,
+      onChange: (v) => (uniforms.uMetalness.value = v),
+    },
+    roughness: {
+      value: 0.35,
+      min: 0,
+      max: 1,
+      step: 0.01,
+      onChange: (v) => (uniforms.uRoughness.value = v),
+    },
+    
   });
 
   const gtProps = useControls("ToneMapGT", {

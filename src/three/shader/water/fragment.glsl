@@ -24,6 +24,9 @@ uniform float uFlowOffset;
 uniform float uTiling;
 uniform float uFlowStrength;
 uniform vec2 uResolution;
+uniform float uMetalness;
+uniform float uRoughness;
+
 
 struct ZBufferParams {
   float x;
@@ -186,6 +189,6 @@ void main() {
 
   // csm_DiffuseColor = vec4(vec3(depth), 1.);
 
-  csm_Metalness = 0.0;
-  csm_Roughness = .25;
+  csm_Metalness = uMetalness;
+  csm_Roughness = uRoughness;
 }
