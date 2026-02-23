@@ -45,8 +45,8 @@ dependencies:
     specifier: ^18.2.0
     version: 18.3.1(react@18.3.1)
   swiper:
-    specifier: ^11.0.7
-    version: 11.2.0
+    specifier: ^12.1.2
+    version: 12.1.2
   three:
     specifier: ^0.161.0
     version: 0.161.0
@@ -2903,8 +2903,8 @@ packages:
       react: 18.3.1
     dev: false
 
-  /swiper@11.2.0:
-    resolution: {integrity: sha512-rjjAKgDEs+grR2eQshVDCcE4KNPC7CI294nfcbV9gE8WCsLdvOYXDeZKUYevqAZZp8j5hE7kpT3dAGVKFBWlxQ==}
+  /swiper@12.1.2:
+    resolution: {integrity: sha512-4gILrI3vXZqoZh71I1PALqukCFgk+gpOwe1tOvz5uE9kHtl2gTDzmYflYCwWvR4LOvCrJi6UEEU+gnuW5BtkgQ==}
     engines: {node: '>= 4.7.0'}
     dev: false
 
