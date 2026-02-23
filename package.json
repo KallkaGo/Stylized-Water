@@ -23,7 +23,7 @@
     "r3f-perf": "^7.1.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "swiper": "^11.0.7",
+    "swiper": "^12.1.2",
     "three": "^0.161.0",
     "three-custom-shader-material": "^5.4.0",
     "three-stdlib": "^2.29.6",
